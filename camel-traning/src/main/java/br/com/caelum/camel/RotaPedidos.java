@@ -1,6 +1,7 @@
 package br.com.caelum.camel;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 
@@ -14,7 +15,14 @@ public class RotaPedidos {
 	            @Override
 	            public void configure() throws Exception {
 	            	from("file:pedidos?delay=5s&noop=true"). //aqui tem um ponto para encadear a chamada do próximo método
+	            	split().
+	                	xpath("/pedido/itens/item").
+	            	filter().
+	            		xpath("/item/formato[text()='EBOOK']").
+	            	marshal(). //queremos transformar a mensagem em outro formato
+	                	xmljson(). //de xml para json
 	            	log("${id} - ${body}"). //usando EL
+	            	setHeader(Exchange.FILE_NAME, simple("${file:name.noext}-${header.CamelSplitIndex}.json")).
 	                to("file:saida");
 	            }
 	    });
